@@ -1,38 +1,59 @@
 <?php
-
+session_start();
 include "db.php";
-include "header.php";
-if(isset($_POST['submit']))
-{
 
-$temp = $_POST['temperature'];
-$hum = $_POST['humidity'];
-
-$query = "INSERT INTO temperature_humidity(temperature,humidity)
-VALUES('$temp','$hum')";
-
-mysqli_query($conn,$query);
-
-echo "Data Inserted Successfully";
-
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
 }
 
+$message = "";
+
+if (isset($_POST['submit'])) {
+    $temp = $_POST['temperature'];
+    $hum = $_POST['humidity'];
+
+    $query = "INSERT INTO temperature_humidity(temperature,humidity) VALUES('$temp','$hum')";
+    mysqli_query($conn, $query);
+
+    $message = "Temperature and humidity data inserted successfully.";
+}
+
+$page_title = "Add Temperature & Humidity";
+$active_page = "temperature";
+include "header.php";
 ?>
 
-<h2>Add Temperature & Humidity</h2>
+<section class="page-hero">
+    <div>
+        <p class="eyebrow">Legacy sensor entry</p>
+        <h2>Add temperature and humidity.</h2>
+        <p>Use this screen for the older combined temperature-humidity table used by chart and record utilities.</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-muted" href="view.php">View Records</a>
+    </div>
+</section>
 
-<form method="POST">
+<article class="form-card">
+    <h3>New Sensor Row</h3>
+    <?php if ($message !== "") { ?>
+        <div class="message success"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div>
+    <?php } ?>
 
-Temperature
-<input type="text" name="temperature">
+    <form method="POST">
+        <div class="form-grid">
+            <div class="field">
+                <label for="temperature">Temperature</label>
+                <input id="temperature" type="number" step="0.1" name="temperature" required>
+            </div>
+            <div class="field">
+                <label for="humidity">Humidity</label>
+                <input id="humidity" type="number" step="0.1" name="humidity" required>
+            </div>
+        </div>
+        <button style="margin-top:18px;" name="submit">Save</button>
+    </form>
+</article>
 
-Humidity
-<input type="text" name="humidity">
-
-<button name="submit">Save</button>
-
-</form>
-
-<br>
-
-<a href="view.php">View Records</a>
+<?php include "footer.php"; ?>

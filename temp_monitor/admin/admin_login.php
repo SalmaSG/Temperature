@@ -17,70 +17,48 @@ if (isset($_POST['login'])) {
         header("Location: admin_dashboard.php");
         exit();
     } else {
-        $message = "Invalid login!";
+        $message = "Invalid admin login.";
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Admin Login</title>
-
-<style>
-body {
-    font-family: 'Segoe UI';
-    background: linear-gradient(135deg, #141e30, #243b55);
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.card {
-    background:white;
-    padding:40px;
-    border-radius:15px;
-    width:320px;
-    text-align:center;
-    box-shadow:0 10px 30px rgba(0,0,0,0.3);
-}
-
-input {
-    width:100%;
-    padding:10px;
-    margin:10px 0;
-    border-radius:8px;
-    border:1px solid #ccc;
-}
-
-button {
-    width:100%;
-    padding:10px;
-    background:#141e30;
-    color:white;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-.msg { color:red; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
-
 <body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <p class="eyebrow">Admin console</p>
+            <h2>Control center access.</h2>
+            <p>Sign in to manage users, produce profiles, records, and operational reports.</p>
 
-<div class="card">
-    <h2>Admin Login 👨‍💼</h2>
+            <?php if ($message !== "") { ?>
+                <div class="message"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></div>
+            <?php } ?>
 
-    <div class="msg"><?php echo $message; ?></div>
+            <form method="POST">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input id="username" type="text" name="username" placeholder="Admin username" required>
+                </div>
 
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username">
-        <input type="password" name="password" placeholder="Password">
-        <button name="login">Login</button>
-    </form>
-</div>
+                <div class="field" style="margin-top:14px;">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" name="password" placeholder="Admin password" required>
+                </div>
 
+                <button style="width:100%; margin-top:18px;" name="login">Login</button>
+            </form>
+
+            <div class="auth-link">
+                <a href="admin_forgot_password.php">Forgot admin password?</a>
+            </div>
+        </section>
+    </main>
 </body>
 </html>

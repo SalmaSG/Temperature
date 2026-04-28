@@ -2,25 +2,16 @@
 include("admin_check.php");
 include("../db.php");
 
-$column_check = mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'is_active'");
-if ($column_check && mysqli_num_rows($column_check) === 0) {
-    mysqli_query($conn, "ALTER TABLE users ADD COLUMN is_active TINYINT DEFAULT 1");
-}
-
-$veg = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM vegetables"))['c'];
-$users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM users"))['c'];
-$active_users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM users WHERE is_active=1"))['c'];
-$records = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM records"))['c'];
-$today_records = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM records WHERE DATE(created_at)=CURDATE()"))['c'];
-$alerts = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM records WHERE status!='Normal'"))['c'];
-$latest_alerts = mysqli_query($conn, "
+$result = mysqli_query($conn, "
     SELECT r.*, v.name
     FROM records r
     LEFT JOIN vegetables v ON r.veg_id = v.id
-    WHERE r.status!='Normal'
     ORDER BY r.id DESC
-    LIMIT 5
 ");
+
+$normal = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM records WHERE status='Normal'"))['c'];
+$high = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM records WHERE status='High'"))['c'];
+$low = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM records WHERE status='Low'"))['c'];
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Admin', ENT_QUOTES, 'UTF-8');
 ?>
 
@@ -29,7 +20,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Admin', ENT_QUOTES, '
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin Reports</title>
     <link rel="stylesheet" href="../style.css">
 </head>
 <body>
@@ -44,11 +35,11 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Admin', ENT_QUOTES, '
             </div>
 
             <nav class="nav" aria-label="Admin navigation">
-                <a class="active" href="admin_dashboard.php"><span class="nav-icon">01</span>Dashboard</a>
+                <a href="admin_dashboard.php"><span class="nav-icon">01</span>Dashboard</a>
                 <a href="admin_vegetables.php"><span class="nav-icon">02</span>Vegetables</a>
                 <a href="users.php"><span class="nav-icon">03</span>Users</a>
                 <a href="admin_records.php"><span class="nav-icon">04</span>Records</a>
-                <a href="admin_reports.php"><span class="nav-icon">05</span>Reports</a>
+                <a class="active" href="admin_reports.php"><span class="nav-icon">05</span>Reports</a>
                 <a href="admin_logout.php"><span class="nav-icon">06</span>Logout</a>
             </nav>
         </aside>
@@ -56,42 +47,37 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Admin', ENT_QUOTES, '
         <main class="main">
             <section class="page-hero">
                 <div>
-                    <p class="eyebrow">Admin overview</p>
-                    <h2>Welcome, <?php echo $admin_name; ?>.</h2>
-                    <p>Track system volume, user access, and monitoring activity from a single polished command surface.</p>
+                    <p class="eyebrow">Admin reporting</p>
+                    <h2>Complete monitoring report.</h2>
+                    <p>Review all temperature readings across produce profiles with live status summaries.</p>
+                </div>
+                <div class="actions">
+                    <a class="btn btn-muted" href="admin_records.php">Manage Records</a>
                 </div>
             </section>
 
             <section class="grid-two">
                 <article class="metric-card panel-body">
-                    <p class="eyebrow">Vegetables</p>
-                    <h2><?php echo (int) $veg; ?></h2>
-                    <p>Configured produce profiles.</p>
+                    <p class="eyebrow">Normal</p>
+                    <h2><?php echo (int) $normal; ?></h2>
+                    <p>Readings inside range.</p>
                 </article>
-
                 <article class="metric-card panel-body">
-                    <p class="eyebrow">Users</p>
-                    <h2><?php echo (int) $users; ?></h2>
-                    <p><?php echo (int) $active_users; ?> active accounts.</p>
+                    <p class="eyebrow">High</p>
+                    <h2><?php echo (int) $high; ?></h2>
+                    <p>Above maximum range.</p>
                 </article>
-
                 <article class="metric-card panel-body">
-                    <p class="eyebrow">Records</p>
-                    <h2><?php echo (int) $records; ?></h2>
-                    <p><?php echo (int) $today_records; ?> readings today.</p>
-                </article>
-
-                <article class="metric-card panel-body">
-                    <p class="eyebrow">Alerts</p>
-                    <h2><?php echo (int) $alerts; ?></h2>
-                    <p>Readings outside safe range.</p>
+                    <p class="eyebrow">Low</p>
+                    <h2><?php echo (int) $low; ?></h2>
+                    <p>Below minimum range.</p>
                 </article>
             </section>
 
             <article class="panel" style="margin-top:20px;">
                 <div class="panel-header">
-                    <h3>Latest Alerts</h3>
-                    <a class="btn btn-muted" href="admin_records.php?status=High">Manage Records</a>
+                    <h3>Report Rows</h3>
+                    <span class="badge badge-active"><?php echo $result ? mysqli_num_rows($result) : 0; ?> rows</span>
                 </div>
 
                 <div class="table-wrap">
@@ -105,8 +91,8 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Admin', ENT_QUOTES, '
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ($latest_alerts && mysqli_num_rows($latest_alerts) > 0) { ?>
-                                <?php while ($row = mysqli_fetch_assoc($latest_alerts)) { ?>
+                            <?php if ($result && mysqli_num_rows($result) > 0) { ?>
+                                <?php while ($row = mysqli_fetch_assoc($result)) { ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($row['name'] ?? 'Unknown', ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td><?php echo htmlspecialchars($row['temperature'], ENT_QUOTES, 'UTF-8'); ?>&deg;C</td>
@@ -115,7 +101,7 @@ $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'Admin', ENT_QUOTES, '
                                     </tr>
                                 <?php } ?>
                             <?php } else { ?>
-                                <tr><td colspan="4">No alerts are active right now.</td></tr>
+                                <tr><td colspan="4">No report data available yet.</td></tr>
                             <?php } ?>
                         </tbody>
                     </table>
